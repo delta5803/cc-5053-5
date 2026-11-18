@@ -1,0 +1,189 @@
+{
+  "name": "high-partials-demo",
+  "base_frequency": 2000.0,
+  "partials": [
+    {
+      "ratio": 1.0,
+      "amplitude": 1.0,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 2.0,
+      "amplitude": 0.5,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 3.0,
+      "amplitude": 0.3333333333333333,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 4.0,
+      "amplitude": 0.25,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 5.0,
+      "amplitude": 0.2,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 6.0,
+      "amplitude": 0.16666666666666666,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 7.0,
+      "amplitude": 0.14285714285714285,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 8.0,
+      "amplitude": 0.125,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 9.0,
+      "amplitude": 0.1111111111111111,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 10.0,
+      "amplitude": 0.1,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 11.0,
+      "amplitude": 0.09090909090909091,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 12.0,
+      "amplitude": 0.08333333333333333,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 13.0,
+      "amplitude": 0.07692307692307693,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 14.0,
+      "amplitude": 0.07142857142857142,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 15.0,
+      "amplitude": 0.06666666666666667,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 16.0,
+      "amplitude": 0.0625,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 17.0,
+      "amplitude": 0.058823529411764705,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 18.0,
+      "amplitude": 0.05555555555555555,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 19.0,
+      "amplitude": 0.05263157894736842,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 20.0,
+      "amplitude": 0.05,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 21.0,
+      "amplitude": 0.047619047619047616,
+      "phase": 0.0,
+      "attack": 0.003,
+      "decay": 0.5,
+      "release": 0.05
+    },
+    {
+      "ratio": 11.6,
+      "amplitude": 0.08,
+      "phase": 0.5,
+      "attack": 0.003,
+      "decay": 0.4,
+      "release": 0.05,
+      "label": "inharmonic-in-taper-band"
+    }
+  ],
+  "master_amplitude": 0.5,
+  "transition_time": 0.02,
+  "bandlimit_mode": "drop",
+  "nyquist_margin": 0.95,
+  "sample_rate": 48000,
+  "description": "21 partials of 2 kHz; upper ones exceed the representable range"
+}

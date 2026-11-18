@@ -1,0 +1,15 @@
+verification report for four-partial-bell (f0=220.0 Hz, sr=48000)
+====================================================================
+spectrum placement
+  target=  220.000 Hz  measured=  220.000 Hz  delta=+0.000  amp=0.16689
+  target=  440.000 Hz  measured=  440.000 Hz  delta=+0.000  amp=0.05479
+  target=  660.000 Hz  measured=  660.000 Hz  delta=+0.000  amp=0.01242
+  target=  924.000 Hz  measured=  924.000 Hz  delta=+0.000  amp=0.00211
+
+decay tau (config vs measured from rendered audio)
+  partial 0: config= 0.800s  measured= 0.800s  R^2=1.0000
+  partial 1: config= 0.450s  measured= 0.450s  R^2=1.0000
+  partial 2: config= 0.250s  measured= 0.250s  R^2=1.0000
+  partial 3: config= 0.150s  measured= 0.150s  R^2=1.0000
+
+initial-phase max waveform error: 5.44e-15

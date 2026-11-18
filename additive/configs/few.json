@@ -1,0 +1,48 @@
+{
+  "name": "four-partial-bell",
+  "base_frequency": 220.0,
+  "partials": [
+    {
+      "ratio": 1.0,
+      "amplitude": 1.0,
+      "phase": 0.0,
+      "attack": 0.005,
+      "decay": 0.8,
+      "release": 0.1,
+      "label": "fundamental"
+    },
+    {
+      "ratio": 2.0,
+      "amplitude": 0.6,
+      "phase": 1.5707963267948966,
+      "attack": 0.005,
+      "decay": 0.45,
+      "release": 0.08,
+      "label": "2nd"
+    },
+    {
+      "ratio": 3.0,
+      "amplitude": 0.35,
+      "phase": 3.141592653589793,
+      "attack": 0.005,
+      "decay": 0.25,
+      "release": 0.06,
+      "label": "3rd"
+    },
+    {
+      "ratio": 4.2,
+      "amplitude": 0.18,
+      "phase": -1.5707963267948966,
+      "attack": 0.005,
+      "decay": 0.15,
+      "release": 0.05,
+      "label": "inharmonic 4.2"
+    }
+  ],
+  "master_amplitude": 0.4,
+  "transition_time": 0.02,
+  "bandlimit_mode": "drop",
+  "nyquist_margin": 0.95,
+  "sample_rate": 48000,
+  "description": "Four hand-specified partials (one inharmonic) for verification."
+}
