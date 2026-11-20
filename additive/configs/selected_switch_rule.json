@@ -1,0 +1,18 @@
+{
+  "strategy": "parallel",
+  "crossfade_samples": 1920,
+  "switch_noise_db_below_signal": -239.998752384362,
+  "onset_error_samples": 0,
+  "beat_error_hz": 0.0,
+  "fd_hop": 256,
+  "sample_rate": 48000,
+  "applicable_range": {
+    "min_click_energy": 1.414158542372563e-29,
+    "max_click_energy": 0.674150539661728,
+    "min_render_seconds": 0.07367145898751915,
+    "max_render_seconds": 0.07600629201624542,
+    "realtime_factor_min": 21.05088878244474,
+    "hop_seconds": 0.005333333333333333,
+    "crossfade_seconds": 0.04
+  }
+}

@@ -67,6 +67,9 @@ class TimbreConfig:
     bandlimit_mode: BandlimitMode = "drop"
     nyquist_margin: float = 0.95
     sample_rate: int = 48000
+    # Fixed hop (samples) of the chunked frequency-domain backend; its STFT
+    # analysis frame is 2 * fd_hop at 50 % overlap.
+    fd_hop: int = 256
     description: str = ""
 
     def __post_init__(self) -> None:
@@ -85,6 +88,9 @@ class TimbreConfig:
         if int(self.sample_rate) <= 0:
             raise ValueError("sample_rate must be positive")
         self.sample_rate = int(self.sample_rate)
+        if int(self.fd_hop) <= 0:
+            raise ValueError("fd_hop must be positive")
+        self.fd_hop = int(self.fd_hop)
         seen: set[int] = set()
         for i, p in enumerate(self.partials):
             if not isinstance(p, PartialSpec):
@@ -151,6 +157,7 @@ class TimbreConfig:
             bandlimit_mode=str(data.get("bandlimit_mode", "drop")),
             nyquist_margin=float(data.get("nyquist_margin", 0.95)),
             sample_rate=int(data.get("sample_rate", 48000)),
+            fd_hop=int(data.get("fd_hop", 256)),
             description=str(data.get("description", "")),
         )
 

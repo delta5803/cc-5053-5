@@ -1,0 +1,392 @@
+{
+  "params": {
+    "duration": 1.6,
+    "switch_time": 0.8,
+    "fd_hop": 256,
+    "crossfade_seconds": 0.04,
+    "weak_ratio": 5.1,
+    "weak_amplitude": 0.08,
+    "weak_attack": 0.002,
+    "weak_onset_time": 0.55,
+    "weak_onset_offset": 97,
+    "neighbor_ratio_a": 2.0,
+    "neighbor_ratio_b": 2.03,
+    "crossing_seconds": 0.5,
+    "phase_edit_radians": 1.5707963267948966,
+    "fd_phase_offset": 1.3,
+    "disappear_ratio": 3.0,
+    "base_frequency": 220.0,
+    "sample_rate": 48000
+  },
+  "results": [
+    {
+      "strategy": "hard",
+      "onset_sample": 233,
+      "onset_time": 0.004854166666666666,
+      "onset_error_samples": 0,
+      "beat_hz": 1.6666087983056144,
+      "beat_strength": 0.4531335178991381,
+      "beat_error_hz": 0.0,
+      "switch_excess_peak": 0.858525828467082,
+      "switch_excess_rms": 0.22082495422659845,
+      "switch_click_energy": 0.674150539661728,
+      "phase_break_count": 14,
+      "phase_breaks": [
+        {
+          "partial": 0,
+          "freq": 220.0,
+          "window_center": 0.8026666666666666,
+          "jump_rad": 1.1975106928588524
+        },
+        {
+          "partial": 0,
+          "freq": 220.0,
+          "window_center": 0.8053333333333333,
+          "jump_rad": 1.3152833256883198
+        },
+        {
+          "partial": 0,
+          "freq": 220.0,
+          "window_center": 0.808,
+          "jump_rad": 1.2916808703702785
+        },
+        {
+          "partial": 0,
+          "freq": 220.0,
+          "window_center": 0.8106666666666666,
+          "jump_rad": 0.9356060255500029
+        },
+        {
+          "partial": 1,
+          "freq": 440.0,
+          "window_center": 0.808,
+          "jump_rad": 1.462838449511466
+        },
+        {
+          "partial": 1,
+          "freq": 440.0,
+          "window_center": 0.8106666666666666,
+          "jump_rad": 2.08671346501297
+        },
+        {
+          "partial": 1,
+          "freq": 440.0,
+          "window_center": 0.8133333333333334,
+          "jump_rad": -0.926593046769419
+        },
+        {
+          "partial": 2,
+          "freq": 446.59999999999997,
+          "window_center": 0.808,
+          "jump_rad": 1.4589644144110814
+        },
+        {
+          "partial": 2,
+          "freq": 446.59999999999997,
+          "window_center": 0.8106666666666666,
+          "jump_rad": 2.1001483630709963
+        },
+        {
+          "partial": 2,
+          "freq": 446.59999999999997,
+          "window_center": 0.8133333333333334,
+          "jump_rad": -0.70469409982136
+        },
+        {
+          "partial": 3,
+          "freq": 660.0,
+          "window_center": 0.8026666666666666,
+          "jump_rad": 1.1893815482347598
+        },
+        {
+          "partial": 3,
+          "freq": 660.0,
+          "window_center": 0.8053333333333333,
+          "jump_rad": 1.285851820342625
+        },
+        {
+          "partial": 3,
+          "freq": 660.0,
+          "window_center": 0.808,
+          "jump_rad": 1.2962917247756813
+        },
+        {
+          "partial": 3,
+          "freq": 660.0,
+          "window_center": 0.8106666666666666,
+          "jump_rad": 0.9675811692783292
+        }
+      ],
+      "ownership": {
+        "switch_sample": 38400,
+        "strategy": "hard",
+        "max_weight_deviation": 0.0,
+        "min_total_weight": 1.0,
+        "max_total_weight": 1.0,
+        "double_counted_samples": 0,
+        "dropped_samples": 0,
+        "per_partial": [
+          {
+            "partial": 0,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 1,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 2,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 3,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 4,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          }
+        ]
+      },
+      "compute": {
+        "backend": "hard",
+        "audio_seconds": 1.6,
+        "elapsed_seconds": 0.07367145898751915,
+        "realtime_factor": 21.718044165123157,
+        "samples_per_second": 1042466.1199259114
+      },
+      "crossfade_samples": 0
+    },
+    {
+      "strategy": "handoff",
+      "onset_sample": 233,
+      "onset_time": 0.004854166666666666,
+      "onset_error_samples": 0,
+      "beat_hz": 1.6666087983056144,
+      "beat_strength": 0.5987181562426787,
+      "beat_error_hz": 0.0,
+      "switch_excess_peak": 3.3306690738754696e-16,
+      "switch_excess_rms": 5.724035463110786e-17,
+      "switch_click_energy": 2.79452114255729e-29,
+      "phase_break_count": 0,
+      "phase_breaks": [],
+      "ownership": {
+        "switch_sample": 38400,
+        "strategy": "handoff",
+        "max_weight_deviation": 0.0,
+        "min_total_weight": 1.0,
+        "max_total_weight": 1.0,
+        "double_counted_samples": 0,
+        "dropped_samples": 0,
+        "per_partial": [
+          {
+            "partial": 0,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 1,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 2,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 3,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          },
+          {
+            "partial": 4,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.0,
+            "fd_share": 1.0
+          }
+        ]
+      },
+      "compute": {
+        "backend": "handoff",
+        "audio_seconds": 1.6,
+        "elapsed_seconds": 0.07600629201624542,
+        "realtime_factor": 21.05088878244474,
+        "samples_per_second": 1010442.6615573475
+      },
+      "crossfade_samples": 0
+    },
+    {
+      "strategy": "parallel",
+      "onset_sample": 233,
+      "onset_time": 0.004854166666666666,
+      "onset_error_samples": 0,
+      "beat_hz": 1.6666087983056144,
+      "beat_strength": 0.5987181562426787,
+      "beat_error_hz": 0.0,
+      "switch_excess_peak": 3.3306690738754696e-16,
+      "switch_excess_rms": 3.993275164768816e-17,
+      "switch_click_energy": 1.414158542372563e-29,
+      "phase_break_count": 0,
+      "phase_breaks": [],
+      "ownership": {
+        "switch_sample": 38400,
+        "strategy": "parallel",
+        "max_weight_deviation": 0.0,
+        "min_total_weight": 1.0,
+        "max_total_weight": 1.0,
+        "double_counted_samples": 0,
+        "dropped_samples": 0,
+        "per_partial": [
+          {
+            "partial": 0,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.937255859375,
+            "fd_share": 0.062744140625
+          },
+          {
+            "partial": 1,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.937255859375,
+            "fd_share": 0.062744140625
+          },
+          {
+            "partial": 2,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.937255859375,
+            "fd_share": 0.062744140625
+          },
+          {
+            "partial": 3,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.937255859375,
+            "fd_share": 0.062744140625
+          },
+          {
+            "partial": 4,
+            "min_weight": 1.0,
+            "max_weight": 1.0,
+            "td_share": 0.937255859375,
+            "fd_share": 0.062744140625
+          }
+        ]
+      },
+      "compute": {
+        "backend": "parallel",
+        "audio_seconds": 1.6,
+        "elapsed_seconds": 0.07600429200101644,
+        "realtime_factor": 21.051442726137132,
+        "samples_per_second": 1010469.2508545823
+      },
+      "crossfade_samples": 1920
+    }
+  ],
+  "negative_control": {
+    "description": "sustained tone, no parameter change at the switch point",
+    "excess_peak": 3.3306690738754696e-16,
+    "excess_rms": 5.907069464823121e-17,
+    "click_energy": 2.8589133030981593e-29,
+    "pass": true
+  },
+  "disappearance": {
+    "description": "steady partial silenced on the exact switch sample",
+    "partial_index": 3,
+    "amplitude_before": 0.3601724088216798,
+    "amplitude_after": 0.0008898445827420209,
+    "reference_amplitude_after": 0.36104213806369945,
+    "bin_magnitude_before": 22.848221119119803,
+    "bin_magnitude_after": 0.299953424878928,
+    "vanishes_once": true,
+    "ownership": {
+      "switch_sample": 38400,
+      "strategy": "handoff",
+      "max_weight_deviation": 0.0,
+      "min_total_weight": 1.0,
+      "max_total_weight": 1.0,
+      "double_counted_samples": 0,
+      "dropped_samples": 0,
+      "per_partial": [
+        {
+          "partial": 0,
+          "min_weight": 1.0,
+          "max_weight": 1.0,
+          "td_share": 0.0,
+          "fd_share": 1.0
+        },
+        {
+          "partial": 1,
+          "min_weight": 1.0,
+          "max_weight": 1.0,
+          "td_share": 0.0,
+          "fd_share": 1.0
+        },
+        {
+          "partial": 2,
+          "min_weight": 1.0,
+          "max_weight": 1.0,
+          "td_share": 0.0,
+          "fd_share": 1.0
+        },
+        {
+          "partial": 3,
+          "min_weight": 1.0,
+          "max_weight": 1.0,
+          "td_share": 0.0,
+          "fd_share": 1.0
+        },
+        {
+          "partial": 4,
+          "min_weight": 1.0,
+          "max_weight": 1.0,
+          "td_share": 0.0,
+          "fd_share": 1.0
+        }
+      ]
+    }
+  },
+  "chosen_rule": {
+    "strategy": "parallel",
+    "reason": "lowest measured switch click energy among ownership-safe strategies",
+    "switch_noise_db_below_signal": -239.998752384362,
+    "onset_error_samples": 0,
+    "beat_error_hz": 0.0,
+    "crossfade_samples": 1920
+  },
+  "applicable_range": {
+    "min_click_energy": 1.414158542372563e-29,
+    "max_click_energy": 0.674150539661728,
+    "min_render_seconds": 0.07367145898751915,
+    "max_render_seconds": 0.07600629201624542,
+    "realtime_factor_min": 21.05088878244474,
+    "hop_seconds": 0.005333333333333333,
+    "crossfade_seconds": 0.04
+  }
+}

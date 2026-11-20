@@ -224,11 +224,23 @@ class NoteVoice:
 
     def render_block(self, block_size: int) -> np.ndarray:
         """Render ``block_size`` samples and advance all continuous state."""
+        partial_signals, note_k = self.render_block_parts(block_size)
+        return note_k * self._sum_partials(partial_signals)
+
+    def render_block_parts(self, block_size: int):
+        """Render one block and return the per-partial matrix and note gain.
+
+        Advances every piece of continuous state exactly as
+        :meth:`render_block` does, but stops before summing partials, so a
+        caller (the dual-backend engine) can weight partials per backend.
+        Returns ``(partial_signals, note_gain)`` where ``partial_signals`` has
+        shape ``(block_size, n_partials)``. The time-domain backend's entries
+        are the raw oscillator samples; the FD backend overrides this to return
+        windowed overlap-added entries.
+        """
         dt = 1.0 / self.sample_rate
-        # Sample k of a voice is interpreted at continuous time t = k / sr.
         sample_t = self.age + np.arange(block_size, dtype=np.float64) * dt
 
-        # True linear ramps from the value captured when the target changed.
         p_gain = _ramp_profile(block_size, self.transition_samples, self.gain_ramp_pos)[:, None]
         gain_k = self.gain_ramp_start[None, :] + (self.target_gain[None, :] - self.gain_ramp_start[None, :]) * p_gain
         p_note = _ramp_profile(block_size, self.transition_samples, self.note_ramp_pos)
@@ -236,22 +248,28 @@ class NoteVoice:
         self.gain_ramp_pos += block_size
         self.note_ramp_pos += block_size
 
-        env = self._envelope(sample_t)                       # (B, n)
-        # Phase increments per sample; phases accumulate without reset.
+        env = self._envelope(sample_t)
         incr = 2.0 * math.pi * self.frequencies * dt
         phases = self.phase + incr * np.arange(block_size, dtype=np.float64)[:, None]
         self.phase = (self.phase + incr * block_size) % (2.0 * math.pi)
 
         partial_signals = gain_k * env * np.sin(phases)
-        block = note_k * partial_signals.sum(axis=1)
         self.gain = gain_k[-1]
         self.note_gain = float(note_k[-1])
-
         self.age += block_size * dt
         if self.released_at is not None and self.age >= self.released_at + float(np.max(self.releases)):
-            # Envelope is mathematically zero beyond this point.
             self.alive = False
-        return block
+        return partial_signals, note_k
+
+    def _sum_partials(self, partial_signals: np.ndarray) -> np.ndarray:
+        """Sum the per-partial sample matrix to one block of audio.
+
+        The oscillator backend sums directly in the time domain. The
+        chunked frequency-domain backend (``fd_engine``) overrides this to
+        route the same per-partial signals through windowed FFT/IFFT blocks;
+        every other piece of state (phase, envelope, ramps) stays shared.
+        """
+        return partial_signals.sum(axis=1)
 
     def snapshot(self) -> VoiceSnapshot:
         t = np.array([self.age])

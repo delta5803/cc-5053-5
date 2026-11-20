@@ -49,6 +49,19 @@
   .filerow input[type=file] { color:var(--muted); }
   .hint { color:var(--muted); font-size:12px; margin-top:6px; }
   #status { color:var(--muted); min-height:18px; }
+  .switch-wrap { position:relative; margin:8px 0 4px; }
+  #switchCanvas { height:150px; cursor:crosshair; }
+  #cutMarker { position:absolute; top:0; bottom:0; width:2px; background:var(--warn);
+               pointer-events:none; box-shadow:0 0 6px var(--warn); }
+  #cutMarker::after { content:attr(data-label); position:absolute; top:2px; left:4px;
+                      font-size:10px; color:var(--warn); white-space:nowrap; }
+  .segbtn { min-width:74px; }
+  .segbtn.active { background:var(--accent); border-color:var(--accent); color:#0b1622; font-weight:600; }
+  #switchMetrics td, #switchMetrics th { text-align:left; }
+  #switchMetrics td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pill { font-size:11px; padding:1px 7px; border-radius:999px; }
+  .pill.good { background:rgba(92,201,138,.16); color:var(--ok); }
+  .pill.bad { background:rgba(224,92,92,.16); color:var(--bad); }
 </style>
 </head>
 <body>
@@ -121,6 +134,48 @@
         <tbody></tbody>
       </table>
     </div>
+  </section>
+
+  <section class="panel" style="grid-column:1 / -1">
+    <h2>后端切换试听（逐振荡器 TD ↔ 分块频域 FD，同一演奏轨道）</h2>
+    <div class="row">
+      <span class="muted">策略</span>
+      <button class="segbtn" data-strategy="hard">hard 硬切</button>
+      <button class="segbtn active" data-strategy="handoff">handoff 相位交接</button>
+      <button class="segbtn" data-strategy="parallel">parallel 有界并行</button>
+      <label class="muted" style="margin-left:14px">并行交叉
+        <input type="range" id="xfade" min="0.01" max="0.12" step="0.005" value="0.04">
+        <span class="measure" id="xfadeVal">0.040</span> s
+      </label>
+      <button id="switchPlay">播放</button>
+      <button id="switchSave">采用此规则用于下次自动演奏</button>
+      <span id="savedRule" class="muted"></span>
+    </div>
+    <p class="hint">在波形上<strong>拖动黄色切点</strong>比较同一位置的三种策略；切点自动量化到 FD hop 边界。
+      下表全部来自实际渲染输出的测量，而非配置。</p>
+    <div class="switch-wrap">
+      <canvas id="switchCanvas"></canvas>
+      <div id="cutMarker" data-label="切点"></div>
+    </div>
+    <div class="row">
+      <label class="muted">切点时间
+        <input type="range" id="cutRange" min="0.2" max="1.4" step="0.0053333" value="0.8" style="width:320px">
+        <span class="measure" id="cutVal">0.8000</span> s
+      </label>
+      <span class="muted" id="cutSample"></span>
+      <button id="envelopeBtn" style="margin-left:auto">扫描切点生成适用区间</button>
+    </div>
+    <div class="scroll" style="max-height:240px">
+      <table id="switchMetrics">
+        <thead><tr>
+          <th>策略</th><th>切点(s)</th><th class="num">起音误差(采样)</th><th class="num">拍频(Hz)</th>
+          <th class="num">拍频误差</th><th class="num">切换RMS</th><th class="num">点击能量</th>
+          <th class="num">相位断层</th><th class="num">实时倍率</th><th class="num">重复/丢弃</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <canvas id="envelopeCanvas" style="margin-top:12px; height:160px; display:none"></canvas>
   </section>
 </main>
 
@@ -308,6 +363,177 @@ $('loadFile').addEventListener('change', async e => {
     renderTable(); renderHeader(); setStatus('配置已加载');
   } catch (err) { setStatus(err.message, true); }
 });
+
+// --- dual-backend switch audition ---
+let switchStrategy = 'handoff';
+let switchTime = 0.8;
+let switchData = null;
+let switchRows = new Map();
+
+function fmt(x, d=3) { return Number(x).toExponential(d); }
+function cutMarkerX() {
+  const canvas = $('switchCanvas');
+  const w = canvas.clientWidth;
+  const dur = switchData ? switchData.duration : 1.6;
+  return Math.min(w - 2, Math.max(0, (switchTime / dur) * w));
+}
+function positionMarker() {
+  const marker = $('cutMarker');
+  marker.style.left = cutMarkerX() + 'px';
+  marker.dataset.label = '切点 ' + switchTime.toFixed(4) + ' s';
+}
+function drawSwitchWave(data) {
+  const canvas = $('switchCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const values = data.samples, n = values.length;
+  const peak = Math.max(...values.map(Math.abs), 1e-9);
+  ctx.strokeStyle = '#5aa7ff'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = (i / n) * w, y = h / 2 - (values[i] / peak) * (h / 2 - 6);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // cut marker line drawn on the canvas too
+  const sw = data.switch_sample / data.sample_rate;
+  const x = (sw / data.duration) * w;
+  ctx.strokeStyle = '#e0a13c'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  positionMarker();
+}
+function addMetricRow(data) {
+  const m = data.metrics;
+  switchRows.set(data.strategy, {data, m});
+  const tb = $('switchMetrics').querySelector('tbody');
+  tb.innerHTML = '';
+  for (const [strat, entry] of switchRows) {
+    const clean = m_clean(entry.m);
+    tb.innerHTML += `<tr>
+      <td>${strat}</td><td>${entry.data.switch_time.toFixed(4)}</td>
+      <td class="num">${entry.m.onset_error_samples}</td>
+      <td class="num">${entry.m.beat_hz.toFixed(3)}</td>
+      <td class="num">${entry.m.beat_error_hz.toFixed(4)}</td>
+      <td class="num">${fmt(entry.m.excess_rms,2)}</td>
+      <td class="num">${fmt(entry.m.click_energy,2)}</td>
+      <td class="num"><span class="pill ${entry.m.phase_break_count ? 'bad' : 'good'}">${entry.m.phase_break_count}</span></td>
+      <td class="num">${entry.m.realtime_factor.toFixed(1)}</td>
+      <td class="num">${entry.m.double_counted}/${entry.m.dropped}</td>
+      <td>${clean ? '<span class="pill good">通过</span>' : '<span class="pill bad">有瑕疵</span>'}</td>
+    </tr>`;
+  }
+}
+function m_clean(m) {
+  return m.phase_break_count === 0 && m.double_counted === 0 && m.dropped === 0
+    && Math.abs(m.onset_error_samples) <= 256 && Math.abs(m.beat_error_hz) < 1
+    && m.excess_rms < 1e-6;
+}
+async function renderSwitch(autoplay) {
+  setStatus('切换渲染中…');
+  const xfade = parseFloat($('xfade').value);
+  try {
+    switchData = await api('/api/switch/render', {
+      strategy: switchStrategy, switch_time: switchTime, crossfade_seconds: xfade,
+    });
+    drawSwitchWave(switchData);
+    $('cutSample').textContent = '切换采样 ' + switchData.switch_sample
+      + '（hop 量化，hop=' + Math.round(switchData.sample_rate * 0.0053333) + '）';
+    addMetricRow(switchData);
+    if (autoplay) playPCM(switchData.samples, switchData.sample_rate);
+    setStatus(`已渲染 ${switchStrategy} @ ${switchTime.toFixed(4)} s`);
+  } catch (e) { setStatus(e.message, true); }
+}
+function setStrategyButtons() {
+  document.querySelectorAll('.segbtn').forEach(b =>
+    b.classList.toggle('active', b.dataset.strategy === switchStrategy));
+}
+document.querySelectorAll('.segbtn').forEach(b => b.addEventListener('click', () => {
+  switchStrategy = b.dataset.strategy; setStrategyButtons(); renderSwitch(false);
+}));
+$('xfade').addEventListener('input', e => { $('xfadeVal').textContent = parseFloat(e.target.value).toFixed(3); });
+$('xfade').addEventListener('change', () => renderSwitch(false));
+$('cutRange').addEventListener('input', e => {
+  switchTime = parseFloat(e.target.value);
+  $('cutVal').textContent = switchTime.toFixed(4);
+  positionMarker();
+});
+let cutDragging = false;
+function cutFromEvent(e) {
+  const canvas = $('switchCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const dur = switchData ? switchData.duration : 1.6;
+  const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+  switchTime = Math.min(1.4, Math.max(0.2, frac * dur));
+  $('cutRange').value = switchTime;
+  $('cutVal').textContent = switchTime.toFixed(4);
+  positionMarker();
+}
+$('switchCanvas').addEventListener('pointerdown', e => {
+  cutDragging = true; cutFromEvent(e); e.target.setPointerCapture(e.pointerId);
+});
+$('switchCanvas').addEventListener('pointermove', e => { if (cutDragging) cutFromEvent(e); });
+$('switchCanvas').addEventListener('pointerup', () => {
+  if (!cutDragging) return;
+  cutDragging = false; renderSwitch(false);
+});
+$('cutRange').addEventListener('change', () => renderSwitch(false));
+$('switchPlay').addEventListener('click', () => { if (switchData) playPCM(switchData.samples, switchData.sample_rate); });
+$('switchSave').addEventListener('click', async () => {
+  try {
+    const out = await api('/api/switch/select', {strategy: switchStrategy});
+    $('savedRule').textContent = '已持久化：' + out.rule.strategy
+      + '（噪声 ' + out.rule.switch_noise_db_below_signal.toFixed(1) + ' dB，下次自动演奏生效）';
+    setStatus('规则已保存到 configs/selected_switch_rule.json');
+  } catch (e) { setStatus(e.message, true); }
+});
+$('envelopeBtn').addEventListener('click', drawEnvelope);
+async function drawEnvelope() {
+  setStatus('扫描切点生成适用区间…');
+  try {
+    const env = await api('/api/switch/envelope');
+    const canvas = $('envelopeCanvas');
+    canvas.style.display = 'block';
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+    const colors = {hard:'#e05c5c', handoff:'#5cc98a', parallel:'#5aa7ff'};
+    const positions = env.positions;
+    const maxLog = Math.max(...env.envelope.map(d => Math.log10(d.click_energy + 1e-30)));
+    const minLog = Math.min(...env.envelope.map(d => Math.log10(d.click_energy + 1e-30)));
+    Object.entries(colors).forEach(([strat, color]) => {
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath();
+      positions.forEach((t, i) => {
+        const d = env.envelope.find(e => e.strategy === strat && e.switch_time === t);
+        const v = (Math.log10(d.click_energy + 1e-30) - minLog) / Math.max(1e-9, maxLog - minLog);
+        const x = (i / (positions.length - 1)) * (w - 40) + 30;
+        const y = h - 20 - v * (h - 40);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.fillStyle = color; ctx.font = '11px sans-serif';
+      ctx.fillText(strat, w - 38, strat === 'hard' ? 20 : strat === 'handoff' ? 36 : 52);
+    });
+    ctx.fillStyle = '#8b95a1'; ctx.font = '11px sans-serif';
+    ctx.fillText('点击能量(对数) 随切点位置的适用区间；hop=' + env.hop_seconds.toFixed(5) + ' s', 30, 14);
+    setStatus('适用区间已绘制（越靠下越干净）');
+  } catch (e) { setStatus(e.message, true); }
+}
+async function initSwitch() {
+  try {
+    const r = await api('/api/switch/rule');
+    if (r.rule) {
+      switchStrategy = r.rule.strategy; setStrategyButtons();
+      $('savedRule').textContent = '当前已持久化规则：' + r.rule.strategy;
+    }
+  } catch (_) {}
+  await renderSwitch(false);
+}
+window.addEventListener('resize', () => { if (switchData) drawSwitchWave(switchData); });
+initSwitch();
 refresh().catch(e => setStatus(e.message, true));
 </script>
 </body>

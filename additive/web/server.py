@@ -16,6 +16,10 @@ POST /api/solo         solo one partial or restore the full mix
 POST /api/note/on      start a note instance, returns its id
 POST /api/note/off     release one note (or all)
 POST /api/render       bounce a note and return float32 PCM + measurements
+GET  /api/switch/rule       currently persisted backend-switch rule
+GET  /api/switch/envelope   switch-noise envelope across cut positions
+POST /api/switch/render     render the switch score at a dragged cut point
+POST /api/switch/select     persist a UI-chosen strategy for next performance
 """
 
 from __future__ import annotations
@@ -34,7 +38,6 @@ from ..config import PartialSpec, TimbreConfig
 from ..engine import AdditiveEngine
 
 STATIC_DIR = Path(__file__).parent / "static"
-
 
 class Session:
     """Holds the one shared engine behind the browser UI."""
@@ -164,6 +167,108 @@ class Session:
                 "solo_index": self.engine.solo_index,
             }
 
+    # -- dual-backend switch audition ---------------------------------------
+
+    def switch_render(self, strategy: str, switch_time: float,
+                      crossfade_seconds: float) -> Dict[str, Any]:
+        """Render the switch-test score at a draggable cut point and measure it."""
+        from ..experiment import ScoreParams, render_score, run_strategy
+
+        params = ScoreParams(switch_time=float(switch_time),
+                             crossfade_seconds=float(crossfade_seconds))
+        reference = render_score(params, "handoff", no_switch=True).audio
+        result = run_strategy(params, strategy, reference, apply_phase_edit=True)
+        hop = params.fd_hop
+        switch_sample = int(round(params.switch_time * params.sample_rate / hop)) * hop
+        return {
+            "sample_rate": params.sample_rate,
+            "duration": params.duration,
+            "switch_sample": switch_sample,
+            "switch_time": switch_time,
+            "strategy": strategy,
+            "samples": result.audio.astype(np.float32).tolist(),
+            "metrics": {
+                "onset_sample": result.onset.onset_sample,
+                "onset_error_samples": result.onset_error_samples,
+                "beat_hz": result.beat_hz,
+                "beat_error_hz": result.beat_error_hz,
+                "excess_rms": result.switch_noise.excess_rms,
+                "excess_peak": result.switch_noise.excess_peak,
+                "click_energy": result.switch_noise.click_energy,
+                "phase_break_count": len(result.phase_breaks),
+                "realtime_factor": result.burden.realtime_factor,
+                "double_counted": result.ownership.double_counted_samples
+                if result.ownership else None,
+                "dropped": result.ownership.dropped_samples
+                if result.ownership else None,
+            },
+        }
+
+    def switch_envelope(self) -> Dict[str, Any]:
+        """Sweep the cut point across the score to map each strategy's envelope.
+
+        Returns measured switch noise at several cut positions, giving the
+        empirically applicable range rather than a single point estimate.
+        """
+        from ..experiment import ScoreParams, render_score, run_strategy
+
+        params = ScoreParams()
+        positions = [0.3, 0.45, 0.6, 0.8, 1.0, 1.2]
+        envelope = []
+        for t in positions:
+            sweep = ScoreParams(switch_time=t)
+            ref = render_score(sweep, "handoff", no_switch=True).audio
+            for strategy in ("hard", "handoff", "parallel"):
+                r = run_strategy(sweep, strategy, ref, apply_phase_edit=True)
+                envelope.append({
+                    "switch_time": t,
+                    "strategy": strategy,
+                    "excess_rms": r.switch_noise.excess_rms,
+                    "click_energy": r.switch_noise.click_energy,
+                    "phase_break_count": len(r.phase_breaks),
+                })
+        return {
+            "sample_rate": params.sample_rate,
+            "positions": positions,
+            "envelope": envelope,
+            "hop_seconds": params.fd_hop / params.sample_rate,
+        }
+
+    def switch_rule(self) -> Dict[str, Any]:
+        from ..experiment import load_switch_rule
+
+        rule = load_switch_rule()
+        return {"rule": rule}
+
+    def select_switch_rule(self, strategy: str) -> Dict[str, Any]:
+        """Persist a UI-chosen strategy for the next automatic performance."""
+        from ..experiment import (
+            RULE_PATH,
+            ScoreParams,
+            applicable_range,
+            load_switch_rule,
+            render_score,
+            run_strategy,
+            save_switch_rule,
+        )
+
+        if strategy not in ("hard", "handoff", "parallel"):
+            raise ValueError("strategy must be hard, handoff or parallel")
+        params = ScoreParams()
+        reference = render_score(params, "handoff", no_switch=True).audio
+        result = run_strategy(params, strategy, reference, apply_phase_edit=True)
+        ratio = result.switch_noise.excess_rms / max(result.switch_noise.signal_rms, 1e-12)
+        rule = {
+            "strategy": strategy,
+            "reason": "selected manually in the audition UI",
+            "switch_noise_db_below_signal": 20 * math.log10(ratio + 1e-12),
+            "onset_error_samples": result.onset_error_samples,
+            "beat_error_hz": result.beat_error_hz,
+            "crossfade_samples": result.crossfade_samples,
+        }
+        save_switch_rule(rule, applicable_range([result], params), params, RULE_PATH)
+        return {"rule": load_switch_rule()}
+
 
 class Handler(BaseHTTPRequestHandler):
     session: Session  # injected by serve()
@@ -190,6 +295,10 @@ class Handler(BaseHTTPRequestHandler):
             self._serve_file(STATIC_DIR / "index.html", "text/html")
         elif self.path == "/api/state":
             self._send_json(self.session.state())
+        elif self.path == "/api/switch/rule":
+            self._send_json(self.session.switch_rule())
+        elif self.path == "/api/switch/envelope":
+            self._send_json(self.session.switch_envelope())
         elif self.path.startswith("/static/"):
             target = (STATIC_DIR / self.path.removeprefix("/static/")).resolve()
             if not str(target).startswith(str(STATIC_DIR.resolve())):
@@ -241,6 +350,15 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.session.render(float(data.get("duration", 1.5)),
                                               int(data.get("block_size", 256)))
                 self._send_json(result)
+            elif self.path == "/api/switch/render":
+                result = self.session.switch_render(
+                    str(data.get("strategy", "handoff")),
+                    float(data.get("switch_time", 0.8)),
+                    float(data.get("crossfade_seconds", 0.04)),
+                )
+                self._send_json(result)
+            elif self.path == "/api/switch/select":
+                self._send_json(self.session.select_switch_rule(str(data.get("strategy"))))
             else:
                 self.send_error(404)
         except (ValueError, KeyError, IndexError, TypeError) as exc:

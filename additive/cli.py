@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import math
 import sys
+from pathlib import Path
 from typing import List
 
 import numpy as np
@@ -181,6 +182,46 @@ def cmd_measure(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_switch_experiment(args: argparse.Namespace) -> int:
+    """Run the dual-backend switch experiment and persist the chosen rule."""
+    from .experiment import (
+        ScoreParams,
+        load_switch_rule,
+        render_score,
+        run_experiment,
+    )
+
+    params = ScoreParams(fd_hop=args.fd_hop, crossfade_seconds=args.crossfade,
+                         switch_time=args.switch_time)
+    report = run_experiment(params, out_path=args.report)
+
+    out_dir = Path(args.wav_dir)
+    for strategy in ("hard", "handoff", "parallel"):
+        score = render_score(params, strategy, apply_phase_edit=True)
+        export_wav(out_dir / f"switch_{strategy}.wav", score.audio, params.sample_rate)
+    ref = render_score(params, "handoff", no_switch=True)
+    export_wav(out_dir / "switch_reference.wav", ref.audio, params.sample_rate)
+
+    print(f"report -> {args.report}")
+    print(f"wavs   -> {out_dir}/switch_{{hard,handoff,parallel,reference}}.wav")
+    print(f"{'strategy':>9} {'excess_rms':>12} {'click_energy':>14} {'breaks':>7} {'rt_factor':>10}")
+    for r in report.results:
+        print(f"{r['strategy']:>9} {r['switch_excess_rms']:>12.3e} "
+              f"{r['switch_click_energy']:>14.3e} {r['phase_break_count']:>7} "
+              f"{r['compute']['realtime_factor']:>10.1f}")
+    nc = report.negative_control
+    print(f"negative control: pass={nc['pass']} excess_rms={nc['excess_rms']:.2e}")
+    d = report.disappearance
+    print(f"disappearance: vanishes_once={d['vanishes_once']} "
+          f"amp {d['amplitude_before']:.4f} -> {d['amplitude_after']:.5f}")
+    rule = report.chosen_rule
+    print(f"chosen rule: {rule['strategy']} "
+          f"({rule['switch_noise_db_below_signal']:.1f} dB below signal)")
+    loaded = load_switch_rule()
+    print(f"persisted rule loaded for next performance: {loaded['strategy']}")
+    return 0
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     from .web.server import serve
 
@@ -237,6 +278,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_meas.add_argument("--block-size", type=int, default=256)
     p_meas.add_argument("--max-partials", type=int, default=8)
     p_meas.set_defaults(func=cmd_measure)
+
+    p_sw = sub.add_parser(
+        "switch-experiment",
+        help="compare TD/FD backend switch strategies, measure output and persist a rule",
+    )
+    p_sw.add_argument("--report", default="additive/renders/switch_experiment.json")
+    p_sw.add_argument("--wav-dir", default="additive/renders")
+    p_sw.add_argument("--fd-hop", type=int, default=256)
+    p_sw.add_argument("--crossfade", type=float, default=0.04, help="parallel crossfade seconds")
+    p_sw.add_argument("--switch-time", type=float, default=0.8)
+    p_sw.set_defaults(func=cmd_switch_experiment)
 
     p_serve = sub.add_parser("serve", help="run the browser interface")
     p_serve.add_argument("config", nargs="?", default=None)
